@@ -1,0 +1,26 @@
+www:
+  build: ./www
+  ports:
+    - "8080:80"
+  volumes:
+    - data/www:/var/www
+    - data/www-log-nginx:/var/log/nginx
+    - data/www-log-php5-fpm /var/log/php5-fpm.log
+  hostname: my.hostname.com
+  environment:
+    CTNR_LOCALE: "en_GB.UTF-8"
+    CTNR_TIMEZONE: "Europe/London"
+  restart: on-failure
+  tty: true
+ssh:
+  build: ./ssh
+  ports:
+    - "2020:22"
+  volumes:
+    - data/www:/var/www
+    - data/www-log-nginx:/var/www/log/nginx:ro
+    - data/www-log-php5-fpm:/var/www/log/php5-fpm.log:ro
+  environment:
+    CTNR_LOCALE: "en_GB.UTF-8"
+    CTNR_TIMEZONE: "Europe/London"
+  restart: on-failure
