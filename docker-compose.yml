@@ -1,26 +1,38 @@
 www:
   build: ./www
   ports:
-    - "8080:80"
+    - "49150:80"
   volumes:
-    - data/www:/var/www
-    - data/www-log-nginx:/var/log/nginx
-    - data/www-log-php5-fpm /var/log/php5-fpm.log
+    - "./data/www/:/var/www"
+    - "./data/log-nginx:/var/log/nginx"
+    - "./data/log-php5:/var/log/php5"
   hostname: my.hostname.com
+  links:
+    - memcache
   environment:
     CTNR_LOCALE: "en_GB.UTF-8"
     CTNR_TIMEZONE: "Europe/London"
+    CTNR_DEBUG: 1
   restart: on-failure
   tty: true
 ssh:
   build: ./ssh
   ports:
-    - "2020:22"
+    - "49151:22"
   volumes:
-    - data/www:/var/www
-    - data/www-log-nginx:/var/www/log/nginx:ro
-    - data/www-log-php5-fpm:/var/www/log/php5-fpm.log:ro
+    - "./data/www:/var/www"
+    - "./data/log-nginx:/var/log/nginx"
+    - "./data/log-php5:/var/log/php5"
+  links:
+    - memcache:memcache
   environment:
     CTNR_LOCALE: "en_GB.UTF-8"
     CTNR_TIMEZONE: "Europe/London"
+    CTNR_DEBUG: 1
   restart: on-failure
+memcache:
+  build: ./memcache
+  restart: on-failure
+  environment:
+    CTNR_LOCALE: "en_GB.UTF-8"
+    CTNR_TIMEZONE: "Europe/London"

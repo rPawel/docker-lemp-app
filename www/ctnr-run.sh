@@ -1,4 +1,3 @@
 #!/bin/bash
-/etc/init.d/nginx start &
-/etc/init.d/exim4 start &
-/usr/bin/supervisord
+chmod 775 /var/log/php5 /var/log/nginx; find /var/log/php5 /var/log/nginx -type f -exec chmod 644 {} \; ; chown -R user:www-data /var/log/php5 /var/log/nginx
+exec /usr/bin/supervisord -c /etc/supervisord.conf
