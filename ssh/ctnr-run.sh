@@ -1,6 +1,7 @@
 #!/bin/bash
 KEYGEN="/usr/bin/ssh-keygen"
 PERSISTENT_CONFIG_FOLDER="/var/www/.persistent-config"
+PERSISTENT_IGNORED_CONFIG_FOLDER=$PERSISTENT_CONFIG_FOLDER/.ignore
 VOLATILE_CONFIG_FOLDER="/"
 
 GLOBAL_SSH_FOLDER="etc/ssh"
@@ -18,9 +19,17 @@ generateServerKeys() {
 }
 
 generateUserCredentials() {
-  _USER_NAME=$1
+  _USER_SALT=$(apg -a 1 -n 1 -m 8 -x 8 -q -M ncl)
   _USER_PASSWORD=$(apg -a 1 -n 1 -m 8 -x 8 -q -M ncl)
-  echo "$_USER_NAME:$_USER_PASSWORD" | chpasswd
+  echo "USER PASSWORD: "${_USER_PASSWORD}
+  _SHADOW_FILE=$1
+  perl -e "print crypt(\"${_USER_PASSWORD}\", \"${_USER_SALT}\"),\"\n\"" > ${_SHADOW_FILE}
+}
+
+applyUserCredentialsFromShadowFile() {
+  _USER_NAME=$1
+  _USER_ENC_PASSWORD=$(cat $2)
+  echo "$_USER_NAME:$_USER_ENC_PASSWORD" | chpasswd -e
 }
 
 generateRootCredentials() {
@@ -39,23 +48,24 @@ initPersistentConfigFolder() {
   mkdir -p $1; chmod 700 $1
 }
 
-# RUN !
+# runtime setup !
 initPersistentConfigFolder ${PERSISTENT_CONFIG_FOLDER}
+initPersistentConfigFolder ${PERSISTENT_IGNORED_CONFIG_FOLDER}
 
 if [ ! -f "$PERSISTENT_CONFIG_FOLDER/$ROOT_SSH_FOLDER/id_rsa" ]; then
     generateRootCredentials ${KEYGEN} "$PERSISTENT_CONFIG_FOLDER/$ROOT_SSH_FOLDER" "id_rsa" "authorized_keys"
-    generateUserCredentials ${USER_NAME}
 fi
+
+if [ ! -f "$PERSISTENT_IGNORED_CONFIG_FOLDER/user-shadow" ]; then
+    generateUserCredentials "$PERSISTENT_IGNORED_CONFIG_FOLDER/user-shadow"
+fi
+applyUserCredentialsFromShadowFile ${USER_NAME} "$PERSISTENT_IGNORED_CONFIG_FOLDER/user-shadow"
 
 if [ ! -f "$PERSISTENT_CONFIG_FOLDER/$GLOBAL_SSH_FOLDER/ssh_host_dsa_key" ]; then
     generateServerKeys ${KEYGEN} "$PERSISTENT_CONFIG_FOLDER/$GLOBAL_SSH_FOLDER"
 fi
 
-cp -ar ${PERSISTENT_CONFIG_FOLDER} ${VOLATILE_CONFIG_FOLDER}
+cp -ar ${PERSISTENT_CONFIG_FOLDER}/* ${VOLATILE_CONFIG_FOLDER}
 
-
-ROOT_ID_RSA=$(cat ${_ROOT_KEYFILE})
-
-echo "{\"user\": {\"password\": \"${_USER_PASSWORD}\"},\"root\": {\"id_rsa\": \"${ROOT_ID_RSA}\"}}"
-
+# start container
 exec /usr/bin/supervisord -c /etc/supervisord.conf
