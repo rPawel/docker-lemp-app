@@ -1,6 +1,6 @@
 #!/bin/bash
 KEYGEN="/usr/bin/ssh-keygen"
-PERSISTENT_CONFIG_FOLDER="/var/www/.persistent-config"
+PERSISTENT_CONFIG_FOLDER="/root/.persistent-config"
 PERSISTENT_IGNORED_CONFIG_FOLDER=$PERSISTENT_CONFIG_FOLDER/.ignore
 VOLATILE_CONFIG_FOLDER="/"
 
