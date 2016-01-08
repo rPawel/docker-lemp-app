@@ -1,5 +1,5 @@
 www:
-  build: ./www
+  image: rpawel/lemp:trusty
   ports:
     - "49150:80"
   volumes:
@@ -8,7 +8,7 @@ www:
     - "./data/log-php5:/var/log/php5"
   hostname: my.hostname.com
   links:
-    - memcache
+    - memcache:memcache
   environment:
     CTNR_LOCALE: "en_GB.UTF-8"
     CTNR_TIMEZONE: "Europe/London"
@@ -16,7 +16,7 @@ www:
   restart: on-failure
   tty: true
 ssh:
-  build: ./ssh
+  image: rpawel/php-ssh:trusty
   ports:
     - "49151:22"
   volumes:
@@ -31,7 +31,7 @@ ssh:
     CTNR_DEBUG: 1
   restart: on-failure
 memcache:
-  build: ./memcache
+  image: rpawel/memcache:trusty
   restart: on-failure
   environment:
     CTNR_LOCALE: "en_GB.UTF-8"
